@@ -1,0 +1,33 @@
+# ── Prod tfvars — AWS Real ──
+# Usage: terraform apply -var-file=prod.tfvars
+#
+# SECURITY: Never commit real passwords. Use:
+#   terraform apply -var-file=prod.tfvars -var="db_password=$(aws secretsmanager get-secret-value ...)"
+
+environment        = "prod"
+project_name       = "taskflow"
+aws_region         = "us-east-1"
+aws_endpoint       = ""       # Empty = real AWS endpoints
+is_local           = false
+
+vpc_cidr                       = "10.0.0.0/16"
+availability_zones             = ["us-east-1a", "us-east-1b"]
+
+db_username                    = "taskflow_admin"
+db_password                    = "${secretsmanager:taskflow/prod/db-creds:password}"  # Replace at apply time
+db_instance_class              = "db.r6g.large"
+
+cache_node_type                = "cache.r6g.large"
+cache_num_nodes                = 2  # Multi-AZ
+
+bff_cpu                        = 1024
+bff_memory                     = 2048
+bff_image                      = "ghcr.io/your-org/taskflow-bff:latest"
+nextjs_image                   = "ghcr.io/your-org/taskflow-nextjs:latest"
+
+tags = {
+  Team        = "platform"
+  Purpose     = "production"
+  CostCenter  = "engineering"
+  Compliance  = "soc2"
+}

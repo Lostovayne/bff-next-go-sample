@@ -1,0 +1,28 @@
+# ── Dev tfvars — MiniStack local ──
+# Usage: terraform apply -var-file=dev.tfvars
+
+environment        = "dev"
+project_name       = "taskflow"
+aws_region         = "us-east-1"
+aws_endpoint       = "http://localhost:4566"
+is_local           = true
+
+vpc_cidr                       = "10.0.0.0/16"
+availability_zones             = ["us-east-1a", "us-east-1b"]
+
+db_username                    = "taskflow_admin"
+db_password                    = "dev-password-123"
+db_instance_class              = "db.t4g.micro"
+
+cache_node_type                = "cache.t4g.micro"
+cache_num_nodes                = 1
+
+bff_cpu                        = 256
+bff_memory                     = 512
+bff_image                      = "go-bff:dev"
+nextjs_image                   = "nextjs:dev"
+
+tags = {
+  Team    = "platform"
+  Purpose = "local-development"
+}

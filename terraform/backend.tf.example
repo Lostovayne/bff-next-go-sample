@@ -1,9 +1,27 @@
-terraform {
-  backend "s3" {
-    bucket = "<your-terraform-state-bucket>"
-    key    = "bff-next-go-sample/terraform.tfstate"
-    region = "us-east-1"
-    dynamodb_table = "<your-lock-table>"
-    encrypt = true
-  }
-}
+# ── Backend Configuration Examples ──
+# Copy this file to backend.tf and uncomment the appropriate block.
+# NEVER commit backend.tf with real credentials.
+
+# ── OPTION 1: Local backend (for MiniStack / local dev) ──
+# terraform {
+#   backend "local" {
+#     path = ".terraform/state/dev.tfstate"
+#   }
+# }
+
+# ── OPTION 2: S3 backend (for prod / team) ──
+# terraform {
+#   backend "s3" {
+#     bucket         = "taskflow-terraform-state"
+#     key            = "prod/terraform.tfstate"
+#     region         = "us-east-1"
+#     encrypt        = true
+#     use_lockfile   = true   # S3 native locking — TF 1.10+
+#     dynamodb_table = ""     # NOT needed — use_lockfile replaces DynamoDB locking
+#   }
+# }
+#
+# Create the state bucket first:
+#   aws s3 mb s3://taskflow-terraform-state --region us-east-1
+#   aws s3api put-bucket-versioning --bucket taskflow-terraform-state --versioning-configuration Status=Enabled
+#   aws s3api put-public-access-block --bucket taskflow-terraform-state --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true

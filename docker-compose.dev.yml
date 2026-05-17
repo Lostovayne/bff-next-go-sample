@@ -1,4 +1,14 @@
+# TaskFlow — Dev Compose
+# Solo los servicios de la app (hot-reload).
+# MiniStack se corre standalone: https://ministack.org
+#
+# Antes de levantar:
+#   1. ministack start
+#   2. bash scripts/init-aws.sh
+#   3. docker compose -f docker-compose.dev.yml up --watch
+
 services:
+  # ── Go BFF: Backend con hot reload (air) ──
   go-bff:
     build:
       context: ./app/go-service
@@ -9,12 +19,19 @@ services:
       - ./app/go-service:/src
     environment:
       - GIN_MODE=debug
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://host.docker.internal:4566
+      # Redis endpoint se obtiene de SSM Parameter Store (/taskflow/elasticache/endpoint)
+      # igual que en AWS real. El BFF lo lee al iniciar.
     develop:
       watch:
         - path: ./app/go-service
           action: rebuild
           target: /src
 
+  # ── Next.js: Frontend con hot reload ──
   nextjs:
     build:
       context: ./app/nextjs

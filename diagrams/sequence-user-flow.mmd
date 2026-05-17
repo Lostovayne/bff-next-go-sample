@@ -1,0 +1,19 @@
+%% Sequence: User login & data fetch
+
+sequenceDiagram
+  participant User
+  participant Browser
+  participant CDN
+  participant Next as "Next.js (SSR)"
+  participant BFF as "Go BFF"
+  participant DB as "Database"
+
+  User->>Browser: open app
+  Browser->>CDN: request page
+  CDN->>Next: SSR page request
+  Next->>BFF: fetch /bff/profile (server side)
+  BFF->>DB: query user
+  DB-->>BFF: return user
+  BFF-->>Next: profile data
+  Next-->>CDN: rendered page
+  CDN-->>Browser: HTML

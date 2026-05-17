@@ -1,0 +1,10 @@
+owner: your-email@example.com
+envs:
+  - dev
+  - staging
+  - prod
+estimated_cost: low (dev) / medium (staging) / high (prod)
+azs: 2
+terraform_version: ">= 1.5"
+project: bff-next-go-sample
+description: "Minimal BFF sample: Next.js (TS) + Go BFF, containerized for ECS Fargate"

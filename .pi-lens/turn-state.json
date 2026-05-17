@@ -1,0 +1,38 @@
+{
+  "files": {
+    "scripts/build-image.js": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 26
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-05-17T05:56:37.388Z"
+    },
+    "scripts/smoke-test.js": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 58
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-05-17T05:56:37.569Z"
+    },
+    "scripts/dev.js": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 18
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-05-17T05:56:37.205Z"
+    }
+  },
+  "turnCycles": 0,
+  "maxCycles": 3,
+  "lastUpdated": "2026-05-17T05:56:37.570Z",
+  "sessionId": "lens-mp98r1p3-3f938a13"
+}

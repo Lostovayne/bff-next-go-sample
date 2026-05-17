@@ -1,0 +1,14 @@
+{
+  "name": "bff-next-go-sample",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build-image": "node scripts/build-image.js",
+    "smoke-test": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@11.0.0"
+}

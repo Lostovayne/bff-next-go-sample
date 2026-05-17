@@ -1,0 +1,15 @@
+%% Deployment diagram (high level)
+
+flowchart TB
+  subgraph Internet
+    User[User]
+  end
+  User --> CloudFront[CloudFront]
+  CloudFront --> ALB[ALB]
+  ALB --> ECScluster[ECS Fargate Cluster]
+  ECScluster --> NextTask[Next.js Task]
+  ECScluster --> BFFTask[Go BFF Task]
+  BFFTask --> RDS[(Aurora/RDS - private)]
+  BFFTask --> ElastiCache[(Redis - private)]
+  ALB --> WorkerTask[Worker Task]
+  WorkerTask --> SQS[(SQS)]

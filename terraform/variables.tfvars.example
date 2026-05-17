@@ -1,0 +1,4 @@
+# Example terraform variables
+aws_region = "us-east-1"
+environment = "dev"
+project = "bff-next-go-sample"

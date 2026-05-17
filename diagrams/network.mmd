@@ -1,0 +1,21 @@
+%% Network diagram (VPC / subnets)
+
+flowchart TB
+  Internet[Internet]
+  IGW[Internet Gateway]
+  VPC[VPC]
+  PublicSubnet[Public Subnet]
+  PrivateSubnet[Private Subnet]
+  NAT[NAT Gateway]
+  ALB[ALB - public]
+  ECS[ECS Tasks - private]
+  RDS[RDS - private]
+
+  Internet --> IGW --> PublicSubnet --> ALB
+  PublicSubnet --> NAT
+  NAT --> PrivateSubnet
+  ALB --> ECS
+  ECS --> RDS
+
+  classDef private fill:#eee,stroke:#999
+  class PrivateSubnet private

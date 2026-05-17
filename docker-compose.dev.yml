@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  go-bff:
+    build: ./app/go-service
+    ports:
+      - "8080:8080"
+  nextjs:
+    build: ./app/nextjs
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_BFF_URL=http://go-bff:8080
+    depends_on:
+      - go-bff

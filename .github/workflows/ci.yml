@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Install frontend deps
+        run: |
+          cd app/nextjs
+          npm ci
+
+      - name: Run frontend lint
+        run: |
+          cd app/nextjs
+          npm run lint || true
+
+      - name: Build frontend
+        run: |
+          cd app/nextjs
+          npm run build
+
+      - name: Build go
+        run: |
+          cd app/go-service
+          go build ./...
+
+  build-images:
+    runs-on: ubuntu-latest
+    needs: [lint-and-test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GHCR (optional)
+        if: secrets.GITHUB_TOKEN
+        run: echo "GHCR auth placeholder"
+
+      - name: Build Docker images
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/bff-nextjs:latest ./app/nextjs
+          docker build -t ghcr.io/${{ github.repository }}/bff-go:latest ./app/go-service
+
+      - name: Push images (optional)
+        if: secrets.GHCR_TOKEN
+        run: |
+          echo "PUSH IMAGES placeholder"

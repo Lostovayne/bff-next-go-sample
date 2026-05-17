@@ -1,4 +1,4 @@
-# bff-next-go-sample — BFF (Next.js + Go) minimal sample
+# BFF (Next.js + Go)
 
 ## Propósito
 
@@ -42,16 +42,16 @@ Cross-platform (recomendado)
 
 Instalación y arranque (recomendado):
 
-# 1) En la raíz (scripts Node cross-platform)
+## 1) En la raíz (scripts Node cross-platform)
 
 pnpm install
 
-# 2) Instala dependencias del frontend (Next.js)
+## 2) Instala dependencias del frontend (Next.js)
 
 cd app/nextjs
 pnpm install
 
-# 3) Volver a la raíz y levantar en dev:
+## 3) Volver a la raíz y levantar en dev:
 
 cd ../..
 pnpm run dev

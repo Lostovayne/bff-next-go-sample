@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+.pnpm-store
+.pnpm-debug.log
+pnpm-lock.yaml
+.env*
+.next
+dist
+coverage

@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+pnpm-lock.yaml
+**/node_modules
+**/.next
+dist
+.env*
+*.log
+.DS_Store
+coverage/
+build/

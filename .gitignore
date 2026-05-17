@@ -16,3 +16,5 @@ images/
 
 # local scripts
 scripts/terraform.tfvars
+# Local Pi runtime state
+.atl/

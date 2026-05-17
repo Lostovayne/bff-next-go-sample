@@ -10,7 +10,7 @@ async function fetchHello() {
 }
 
 export default function HelloClient() {
-	const { data, error, isLoading } = useQuery(["hello"], fetchHello);
+	const { data, error, isLoading } = useQuery({ queryKey: ["hello"], queryFn: fetchHello });
 
 	if (isLoading) return <p>Loading...</p>;
 	if (error) return <p>Error: {String(error)}</p>;

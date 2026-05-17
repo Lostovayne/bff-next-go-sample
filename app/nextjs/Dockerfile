@@ -1,8 +1,8 @@
 # Single multi-stage build using pnpm
 FROM node:22-alpine AS builder
 WORKDIR /app
-# copy lockfile first for better cache
-COPY package.json pnpm-lock.yaml* ./
+# copy lockfile and workspace config first for better cache
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
 RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 # non-interactive in CI/docker
 ENV CI=true

@@ -12,6 +12,7 @@ dist/
 *.tfstate
 *.tfstate.backup
 *.tfvars
+*.tfstate.*.backup
 
 # Docker
 images/

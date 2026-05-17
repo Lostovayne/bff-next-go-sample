@@ -143,9 +143,16 @@ resource "aws_security_group" "database" {
 # ElastiCache (Redis)
 # ═══════════════════════════════════════════
 #
-# Dev: MiniStack ya incluye Redis integrado. No creamos ElastiCache real,
-# solo registramos el endpoint en SSM para que el BFF lo lea.
+# Dev: MiniStack soporta ElastiCache API (create/describe) pero el provider
+# de Terraform crashea al leer la respuesta (nil pointer en campos como
+# CacheNodeCreateTime, y DescribeCacheClusters devuelve 404 para los
+# nodos del replication group). Por eso en dev usamos localhost:6379
+# directamente — MiniStack expone Redis en ese puerto.
+#
 # Prod: ElastiCache real con replication group multi-AZ.
+#
+# El BFF siempre lee el endpoint de SSM Parameter Store — mismo código,
+# mismo flujo, sin importar el entorno.
 
 resource "aws_elasticache_subnet_group" "main" {
   count = var.is_local ? 0 : 1
@@ -156,7 +163,6 @@ resource "aws_elasticache_subnet_group" "main" {
   tags = local.common_tags
 }
 
-# Replication group for prod only
 resource "aws_elasticache_replication_group" "prod" {
   count = var.is_local ? 0 : 1
 
@@ -361,8 +367,9 @@ resource "aws_ssm_parameter" "bff_port" {
 resource "aws_ssm_parameter" "elasticache_endpoint" {
   name      = "/${var.project_name}/elasticache/endpoint"
   type      = "String"
-  # Dev: MiniStack Redis runs on localhost:6379 (accessible via host.docker.internal from containers)
-  # Prod: Real ElastiCache endpoint from the replication group
+  # Dev: MiniStack Redis on localhost:6379 (ElastiCache API is incomplete in MiniStack —
+  # TF provider crashes on read-back. The BFF still reads from SSM, same code path.)
+  # Prod: Real ElastiCache replication group primary endpoint.
   value     = var.is_local ? "localhost:6379" : aws_elasticache_replication_group.prod[0].primary_endpoint_address
   overwrite = true
 

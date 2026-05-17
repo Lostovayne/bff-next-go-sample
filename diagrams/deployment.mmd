@@ -1,15 +1,77 @@
-%% Deployment diagram (high level)
+%% Deployment Diagram — How containers map to infrastructure
+%% Shows the physical/logical deployment topology.
 
 flowchart TB
-  subgraph Internet
-    User[User]
+  subgraph "Edge"
+    CF["CloudFront Distribution\n(CNAME: app.example.com)"]
   end
-  User --> CloudFront[CloudFront]
-  CloudFront --> ALB[ALB]
-  ALB --> ECScluster[ECS Fargate Cluster]
-  ECScluster --> NextTask[Next.js Task]
-  ECScluster --> BFFTask[Go BFF Task]
-  BFFTask --> RDS[(Aurora/RDS - private)]
-  BFFTask --> ElastiCache[(Redis - private)]
-  ALB --> WorkerTask[Worker Task]
-  WorkerTask --> SQS[(SQS)]
+
+  subgraph "Compute — ECS Fargate (Multi-AZ)"
+    subgraph "ECS Cluster: bff-next-go-{env}"
+      subgraph "Service: nextjs"
+        Next1["Next.js Task\n(AZ-a, 256 CPU / 512 MB)"]
+        Next2["Next.js Task\n(AZ-b, 256 CPU / 512 MB)"]
+      end
+      subgraph "Service: go-bff"
+        BFF1["Go BFF Task\n(AZ-a, 512 CPU / 1024 MB)"]
+        BFF2["Go BFF Task\n(AZ-b, 512 CPU / 1024 MB)"]
+      end
+      subgraph "Service: worker"
+        W1["Worker Task\n(AZ-a, 256 CPU / 512 MB)"]
+        W2["Worker Task\n(AZ-b, 256 CPU / 512 MB)"]
+      end
+    end
+
+    ALB["ALB (Application Load Balancer)\n(2 target groups: nextjs, go-bff)"]
+  end
+
+  subgraph "Data — Private Subnets"
+    RDS["Aurora PostgreSQL\n(writer + reader, multi-AZ)"]
+    Redis["ElastiCache Redis\n(cluster mode, multi-AZ)"]
+    SQS["SQS Queues\n(worker-jobs, dlq)"]
+  end
+
+  subgraph "Supporting Services"
+    ECR["ECR Repository\n(container images)"]
+    SM["Secrets Manager\n(DB creds, API keys)"]
+    CW["CloudWatch\n(logs, metrics, alarms)"]
+    S3["S3 Bucket\n(Next.js static assets)"]
+  end
+
+  User["👤 User"] -->|HTTPS| CF
+  CF -->|cache: static| S3
+  CF -->|origin: SSR| ALB
+  ALB -->|TG: nextjs| Next1
+  ALB -->|TG: nextjs| Next2
+  ALB -->|TG: go-bff| BFF1
+  ALB -->|TG: go-bff| BFF2
+  Next1 -->|HTTP| BFF1
+  Next2 -->|HTTP| BFF2
+  BFF1 -->|TCP:5432| RDS
+  BFF2 -->|TCP:5432| RDS
+  BFF1 -->|TCP:6379| Redis
+  BFF2 -->|TCP:6379| Redis
+  BFF1 -->|SendMessage| SQS
+  BFF2 -->|SendMessage| SQS
+  W1 -->|ReceiveMessage| SQS
+  W2 -->|ReceiveMessage| SQS
+  W1 -->|process| RDS
+  W2 -->|process| RDS
+
+  ECR -.->|pull image| Next1
+  ECR -.->|pull image| BFF1
+  ECR -.->|pull image| W1
+  SM -.->|secrets| BFF1
+  SM -.->|secrets| RDS
+  Next1 -.->|stdout| CW
+  BFF1 -.->|stdout| CW
+  W1 -.->|stdout| CW
+
+  classDef edge fill:#fff3e0,stroke:#f57c00
+  classDef compute fill:#e8f5e9,stroke:#388e3c
+  classDef data fill:#f3e5f5,stroke:#7b1fa2
+  classDef support fill:#e3f2fd,stroke:#1565c0
+  class CF edge
+  class Next1,Next2,BFF1,BFF2,W1,W2,ALB compute
+  class RDS,Redis,SQS data
+  class ECR,SM,CW,S3 support

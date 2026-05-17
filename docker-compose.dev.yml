@@ -1,13 +1,38 @@
 services:
   go-bff:
-    build: ./app/go-service
+    build:
+      context: ./app/go-service
+      dockerfile: Dockerfile.dev
     ports:
       - "8080:8080"
+    volumes:
+      - ./app/go-service:/src
+    environment:
+      - GIN_MODE=debug
+    develop:
+      watch:
+        - path: ./app/go-service
+          action: rebuild
+          target: /src
+
   nextjs:
-    build: ./app/nextjs
+    build:
+      context: ./app/nextjs
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
+    volumes:
+      - ./app/nextjs:/app
+      - /app/node_modules
+      - /app/.next
     environment:
       - NEXT_PUBLIC_BFF_URL=http://go-bff:8080
+      - NODE_ENV=development
+      - CI=true
     depends_on:
       - go-bff
+    develop:
+      watch:
+        - path: ./app/nextjs
+          action: rebuild
+          target: /app

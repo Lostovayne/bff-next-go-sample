@@ -1,23 +1,47 @@
-%% Container Diagram
+%% Container Diagram — BFF Next.js + Go
+%% Shows the major containers (deployable units) and their interactions.
 
 flowchart LR
-  subgraph Frontend
-    NextApp["Next.js app (SSR + client)"]
+  subgraph "Client Tier"
+    Browser["Web Browser\n(SPA + hydration)"]
   end
-  subgraph Backend
-    GoBFF["Go BFF API"]
-    Worker["Background Worker"]
+
+  subgraph "Edge Tier"
+    CF["CloudFront Distribution\n(static + SSR origin)"]
   end
-  DB["Aurora/RDS"]
-  Cache["Redis"]
-  Queue["SQS"]
 
-  NextApp --> GoBFF
-  GoBFF --> DB
-  GoBFF --> Cache
-  GoBFF --> Queue
-  Worker --> Queue
-  Worker --> DB
+  subgraph "Compute Tier"
+    subgraph "Next.js Service"
+      NextSSR["Next.js Server\n(SSR / API Routes)"]
+      NextStatic["Static Assets\n(JS, CSS, images)"]
+    end
+    subgraph "Go BFF Service"
+      BFFAPI["Go HTTP API\n(routes, handlers, middleware)"]
+      BFFWorker["Background Worker\n(async jobs, retries)"]
+    end
+  end
 
-  style NextApp fill:#f9f,stroke:#333,stroke-width:1px
-  style GoBFF fill:#bbf,stroke:#333,stroke-width:1px
+  subgraph "Data Tier"
+    DB["Aurora PostgreSQL\n(relational data)"]
+    Cache["ElastiCache Redis\n(sessions, cache, rate limit)"]
+    Queue["SQS\n(async message queue)"]
+  end
+
+  Browser -->|HTTPS| CF
+  CF -->|cache hit| NextStatic
+  CF -->|SSR request| NextSSR
+  NextSSR -->|REST/gRPC| BFFAPI
+  BFFAPI -->|CRUD| DB
+  BFFAPI -->|cache ops| Cache
+  BFFAPI -->|enqueue| Queue
+  BFFWorker -->|dequeue| Queue
+  BFFWorker -->|process| DB
+
+  classDef client fill:#e1f5fe,stroke:#0288d1
+  classDef edge fill:#fff3e0,stroke:#f57c00
+  classDef compute fill:#e8f5e9,stroke:#388e3c
+  classDef data fill:#f3e5f5,stroke:#7b1fa2
+  class Browser client
+  class CF edge
+  class NextSSR,NextStatic,BFFAPI,BFFWorker compute
+  class DB,Cache,Queue data

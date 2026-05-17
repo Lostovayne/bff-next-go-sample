@@ -1,0 +1,22 @@
+# Development Dockerfile for Next.js with hot reload
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Enable corepack and prepare pnpm
+RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
+
+# Copy package files and npmrc first for better caching
+COPY package.json pnpm-lock.yaml* .npmrc ./
+
+# Install all dependencies (dev + prod), skip build scripts (sharp has prebuilt binaries)
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy the rest of the source
+COPY . .
+
+# Expose the Next.js dev server port
+EXPOSE 3000
+
+# Run in development mode with hot reload
+CMD ["pnpm", "dev"]

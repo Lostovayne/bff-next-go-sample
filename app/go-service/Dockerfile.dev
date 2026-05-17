@@ -1,0 +1,21 @@
+# Development Dockerfile for Go BFF with hot reload using air
+FROM golang:1.26-alpine
+
+WORKDIR /src
+
+# Install air for hot reload and git for module fetching
+RUN apk add --no-cache git && \
+    go install github.com/air-verse/air@latest
+
+# Copy go.mod first for better caching
+COPY go.mod ./
+RUN go env -w GOPROXY=https://proxy.golang.org,direct && go mod download
+
+# Copy the rest
+COPY . .
+
+# Expose the BFF port
+EXPOSE 8080
+
+# Run with air for hot reload
+CMD ["air", "-c", ".air.toml"]

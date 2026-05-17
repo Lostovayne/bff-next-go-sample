@@ -1,19 +1,72 @@
-%% Sequence: User login & data fetch
+%% Sequence Diagram — User Login & Data Fetch
+%% Shows the full request flow including SSR, BFF call, and client hydration.
 
 sequenceDiagram
+  autonumber
   participant User
   participant Browser
-  participant CDN
-  participant Next as "Next.js (SSR)"
-  participant BFF as "Go BFF"
-  participant DB as "Database"
+  participant CF as CloudFront
+  participant Next as Next.js (SSR)
+  participant BFF as Go BFF
+  participant Cache as Redis
+  participant DB as Aurora PostgreSQL
+  participant SQS as SQS Queue
 
-  User->>Browser: open app
-  Browser->>CDN: request page
-  CDN->>Next: SSR page request
-  Next->>BFF: fetch /bff/profile (server side)
-  BFF->>DB: query user
-  DB-->>BFF: return user
-  BFF-->>Next: profile data
-  Next-->>CDN: rendered page
-  CDN-->>Browser: HTML
+  rect rgb(240, 248, 255)
+    note over User,CF: Phase 1 — Initial Page Load (SSR)
+    User->>Browser: Navigate to /dashboard
+    Browser->>CF: GET /dashboard
+    alt Cache Hit
+      CF-->>Browser: Cached HTML (200)
+    else Cache Miss
+      CF->>Next: GET /dashboard (origin request)
+      Next->>BFF: GET /bff/session (validate session)
+      BFF->>Cache: GET session:{token}
+      alt Session Valid
+        Cache-->>BFF: session data
+        BFF-->>Next: 200 OK {user}
+        Next->>BFF: GET /bff/dashboard-data
+        BFF->>DB: SELECT dashboard_data WHERE user_id = ?
+        DB-->>BFF: dashboard rows
+        BFF-->>Next: 200 OK {dashboard}
+        Next-->>CF: Rendered HTML + __NEXT_DATA__
+        CF-->>Browser: HTML (cached for next time)
+      else Session Invalid
+        BFF-->>Next: 401 Unauthorized
+        Next-->>CF: Redirect to /login
+        CF-->>Browser: 302 /login
+      end
+    end
+  end
+
+  rect rgb(255, 248, 240)
+    note over User,SQS: Phase 2 — Client Hydration + Interaction
+    Browser->>Browser: Hydrate React (client-side)
+    User->>Browser: Click "Refresh Data"
+    Browser->>BFF: GET /bff/dashboard-data (client fetch)
+    BFF->>Cache: GET cache:dashboard:{userId}
+    alt Cache Hit
+      Cache-->>BFF: cached data
+      BFF-->>Browser: 200 OK {dashboard}
+    else Cache Miss
+      BFF->>DB: SELECT dashboard_data WHERE user_id = ?
+      DB-->>BFF: dashboard rows
+      BFF->>Cache: SET cache:dashboard:{userId} TTL=60s
+      BFF-->>Browser: 200 OK {dashboard}
+    end
+  end
+
+  rect rgb(240, 255, 240)
+    note over User,SQS: Phase 3 — Async Action (Background Job)
+    User->>Browser: Click "Generate Report"
+    Browser->>BFF: POST /bff/reports/generate
+    BFF->>SQS: SendMessage {type: "generate_report", userId: 123}
+    SQS-->>BFF: MessageId
+    BFF-->>Browser: 202 Accepted {jobId: "abc-123"}
+    note over SQS: Worker polls queue
+    SQS-->>Worker: ReceiveMessage
+    Worker->>DB: INSERT report_job + process
+    DB-->>Worker: OK
+    Worker->>SQS: DeleteMessage
+    note right of Worker: Later: push notification<br/>or poll returns result
+  end

@@ -1,21 +1,76 @@
-%% Network diagram (VPC / subnets)
+%% Network Diagram — VPC, Subnets, Routing
+%% Multi-AZ layout with public/private subnets and proper routing.
 
 flowchart TB
-  Internet[Internet]
-  IGW[Internet Gateway]
-  VPC[VPC]
-  PublicSubnet[Public Subnet]
-  PrivateSubnet[Private Subnet]
-  NAT[NAT Gateway]
-  ALB[ALB - public]
-  ECS[ECS Tasks - private]
-  RDS[RDS - private]
+  subgraph "AWS Region"
+    subgraph "VPC (10.0.0.0/16)"
 
-  Internet --> IGW --> PublicSubnet --> ALB
-  PublicSubnet --> NAT
-  NAT --> PrivateSubnet
-  ALB --> ECS
-  ECS --> RDS
+      subgraph "AZ-a"
+        subgraph "Public Subnet A\n(10.0.1.0/24)"
+          IGW["Internet Gateway"]
+          NAT_A["NAT Gateway A"]
+          ALB["ALB\n(public-facing)"]
+        end
+        subgraph "Private Subnet A\n(10.0.2.0/24)"
+          ECS_A["ECS Tasks A\n(Next.js + Go BFF)"]
+          Worker_A["Worker Task A"]
+        end
+        subgraph "Isolated Subnet A\n(10.0.3.0/24)"
+          RDS_A["Aurora Writer\n(primary)"]
+          Redis_A["ElastiCache\n(primary)"]
+        end
+      end
 
-  classDef private fill:#eee,stroke:#999
-  class PrivateSubnet private
+      subgraph "AZ-b"
+        subgraph "Public Subnet B\n(10.0.4.0/24)"
+          NAT_B["NAT Gateway B"]
+        end
+        subgraph "Private Subnet B\n(10.0.5.0/24)"
+          ECS_B["ECS Tasks B\n(Next.js + Go BFF)"]
+          Worker_B["Worker Task B"]
+        end
+        subgraph "Isolated Subnet B\n(10.0.6.0/24)"
+          RDS_B["Aurora Reader\n(replica)"]
+          Redis_B["ElastiCache\n(replica)"]
+        end
+      end
+
+      subgraph "VPC Endpoints"
+        VPCE_SQS["VPCE: SQS"]
+        VPCE_S3["VPCE: S3 (Gateway)"]
+        VPCE_SM["VPCE: Secrets Manager"]
+      end
+    end
+  end
+
+  Internet["🌐 Internet"] --> IGW
+  IGW --> ALB
+  ALB --> ECS_A
+  ALB --> ECS_B
+  ECS_A --> NAT_A
+  ECS_B --> NAT_B
+  NAT_A --> IGW
+  NAT_B --> IGW
+  ECS_A --> RDS_A
+  ECS_B --> RDS_B
+  ECS_A --> Redis_A
+  ECS_B --> Redis_B
+  ECS_A -.-> VPCE_SQS
+  ECS_B -.-> VPCE_SQS
+  ECS_A -.-> VPCE_S3
+  ECS_B -.-> VPCE_S3
+  ECS_A -.-> VPCE_SM
+  ECS_B -.-> VPCE_SM
+  Worker_A --> VPCE_SQS
+  Worker_B --> VPCE_SQS
+  RDS_A -.->|replication| RDS_B
+  Redis_A -.->|replication| Redis_B
+
+  classDef public fill:#fff3e0,stroke:#f57c00
+  classDef private fill:#e8f5e9,stroke:#388e3c
+  classDef isolated fill:#fce4ec,stroke:#c62828
+  classDef endpoint fill:#e3f2fd,stroke:#1565c0,stroke-dasharray: 5 5
+  class IGW,NAT_A,NAT_B,ALB public
+  class ECS_A,ECS_B,Worker_A,Worker_B private
+  class RDS_A,RDS_B,Redis_A,Redis_B isolated
+  class VPCE_SQS,VPCE_S3,VPCE_SM endpoint

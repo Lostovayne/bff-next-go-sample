@@ -1,23 +1,31 @@
-%% System Context
-%% Browser + Next.js + Go BFF + DB + Cache + 3rd party
+%% System Context Diagram — BFF Next.js + Go
+%% Shows the system and its external dependencies at a high level.
 
 flowchart LR
   subgraph User
-    Browser["Browser / Client"]
+    Browser["Browser / Mobile Client"]
   end
 
-  CDN["CloudFront / CDN"]
-  Next["Next.js (SSR) - App"]
-  BFF["Go BFF"]
-  DB["Database - Aurora/RDS"]
-  Cache["Redis / ElastiCache"]
-  Queue["SQS / SNS"]
-  ThirdParty["3rd-party APIs"]
+  subgraph "External Systems"
+    CDN["CloudFront (CDN)"]
+    ThirdParty["3rd-party APIs\n(auth, payments, etc.)"]
+  end
 
-  Browser --> CDN
-  CDN --> Next
-  Next --> BFF
-  BFF --> DB
-  BFF --> Cache
-  BFF --> Queue
-  BFF --> ThirdParty
+  subgraph "Our System"
+    Next["Next.js (SSR + SPA)"]
+    BFF["Go BFF API"]
+    DB["Database (Aurora/RDS)"]
+    Cache["Cache (ElastiCache/Redis)"]
+    Queue["Message Queue (SQS/SNS)"]
+  end
+
+  Browser -->|HTTPS| CDN
+  CDN -->|static assets + SSR proxy| Next
+  Next -->|HTTP/gRPC| BFF
+  BFF -->|queries| DB
+  BFF -->|read/write| Cache
+  BFF -->|publish/consume| Queue
+  BFF -->|outbound calls| ThirdParty
+
+  classDef external fill:#f9f9f9,stroke:#999,stroke-dasharray: 5 5
+  class CDN,ThirdParty external

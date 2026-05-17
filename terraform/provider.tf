@@ -54,4 +54,10 @@ provider "aws" {
 
   # Don't load any AWS config profile when using MiniStack
   profile = var.is_local ? "" : null
+
+  # Prevent loading shared config/credentials files in local mode
+  # This avoids "failed to get shared config profile" errors when
+  # the user has a default AWS profile configured on their machine
+  shared_config_files      = var.is_local ? [] : null
+  shared_credentials_files = var.is_local ? [] : null
 }

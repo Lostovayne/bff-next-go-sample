@@ -10,11 +10,22 @@ dist/
 # Terraform
 .terraform/
 *.tfstate
+*.tfstate.backup
+*.tfvars
 
 # Docker
 images/
 
 # local scripts
 scripts/terraform.tfvars
+
 # Local Pi runtime state
 .atl/
+.pi/
+.pi-lens/
+
+# Go build artifacts
+app/go-service/tmp/
+
+# pnpm cache
+app/nextjs/.pnpm-store/

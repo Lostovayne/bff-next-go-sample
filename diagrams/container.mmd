@@ -2,15 +2,15 @@
 
 flowchart LR
   subgraph Frontend
-    NextApp[Next.js app (SSR + client)]
+    NextApp["Next.js app (SSR + client)"]
   end
   subgraph Backend
-    GoBFF[Go BFF API]
-    Worker[Background Worker]
+    GoBFF["Go BFF API"]
+    Worker["Background Worker"]
   end
-  DB[(Aurora/RDS)]
-  Cache[(Redis)]
-  Queue[(SQS)]
+  DB["Aurora/RDS"]
+  Cache["Redis"]
+  Queue["SQS"]
 
   NextApp --> GoBFF
   GoBFF --> DB

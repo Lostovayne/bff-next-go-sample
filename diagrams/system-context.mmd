@@ -2,17 +2,22 @@
 %% Browser + Next.js + Go BFF + DB + Cache + 3rd party
 
 flowchart LR
-  Browser[Browser / Client]
   subgraph User
-    Browser
+    Browser["Browser / Client"]
   end
-  Browser --> CDN[CloudFront / CDN]
-  CDN --> Next[Next.js (SSR) - App]
-  Next --> BFF[Go BFF]
-  BFF --> DB[(Database - Aurora/RDS)]
-  BFF --> Cache[(Redis / ElastiCache)]
-  BFF --> Queue[(SQS / SNS)]
-  BFF --> 3rd[3rd-party APIs]
 
-  note right of Next: Client + SSR rendering
-  note right of BFF: Composition, auth, caching
+  CDN["CloudFront / CDN"]
+  Next["Next.js (SSR) - App"]
+  BFF["Go BFF"]
+  DB["Database - Aurora/RDS"]
+  Cache["Redis / ElastiCache"]
+  Queue["SQS / SNS"]
+  ThirdParty["3rd-party APIs"]
+
+  Browser --> CDN
+  CDN --> Next
+  Next --> BFF
+  BFF --> DB
+  BFF --> Cache
+  BFF --> Queue
+  BFF --> ThirdParty
